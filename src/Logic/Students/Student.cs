@@ -56,5 +56,6 @@ namespace Logic.Students
             var enrollment = new Enrollment(this, course, grade);
             _enrollments.Add(enrollment);
         }
+        //Hello world from github
     }
 }
