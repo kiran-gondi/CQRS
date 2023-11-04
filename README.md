@@ -1,2 +1,2 @@
-# CQRS
-CQRS Demo
+# CQRS CQRS Demo
+## Here goes the CQRS Demo details.
