@@ -1,4 +1,4 @@
 # CQRS 
-##CQRS Demo
+## CQRS Demo
 ## Here goes the CQRS Demo details.
 # Lorem ipsum
