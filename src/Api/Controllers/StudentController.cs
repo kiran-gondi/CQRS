@@ -47,7 +47,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult Register([FromBody] StudentDto dto)
+        public IActionResult Register([FromBody] NewStudentDto dto)
         {
             var student = new Student(dto.Name, dto.Email);
 
