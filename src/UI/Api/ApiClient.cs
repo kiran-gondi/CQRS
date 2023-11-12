@@ -47,6 +47,7 @@ namespace UI.Api
              where T : class
         {
             var request = new HttpRequestMessage(method, $"{_endpointUrl}/{url}");
+            //var request = new HttpRequestMessage(method, $"{_endpointUrl}{url}");
             if (content != null)
             {
                 request.Content = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");

@@ -1,8 +1,11 @@
 ﻿using Api.Utils;
+using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
+using static Logic.Students.EditPersonalInfoCommandHandler;
 
 namespace Api
 {
@@ -20,7 +23,17 @@ namespace Api
             services.AddMvc();
 
             services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
-            services.AddScoped<UnitOfWork>();
+            services.AddTransient<UnitOfWork>();
+            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>, EditPersonalInfoCommandHandler>();
+            services.AddTransient<IQueryHandler<GetListQuery, List<StudentDto>>, GetListQueryHandler>();
+      
+            services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
+            services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
+            services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
+            services.AddTransient<ICommandHandler<TransferCommand>, TransferCommandHandler>();
+            services.AddTransient<ICommandHandler<DisenrollCommand>, DisenrollCommandHandler>();
+
+            services.AddSingleton<Messages>();
         }
 
         public void Configure(IApplicationBuilder app)
