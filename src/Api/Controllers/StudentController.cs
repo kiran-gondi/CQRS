@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Api.Dtos;
+using CSharpFunctionalExtensions;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -151,17 +152,26 @@ namespace Api.Controllers
 
         [HttpPut("{id}")]
         public IActionResult EditPersonalInfo(long id, [FromBody] StudentPersonalInfoDto dto) //Command
-    {
-          Student student = _studentRepository.GetById(id);
-          if (student == null)
-            return Error($"No student found for Id {id}");
+        {
+            var command = new EditPersonalInfoCommand()
+            {
+              Email = dto.Email,
+              Name = dto.Name,
+              Id = id
+            };
+            var handler = new EditPersonalInfoCommandHandler(_unitOfWork);
+            Result result = handler.Handle(command);
 
-          student.Name = dto.Name;
-          student.Email = dto.Email;
+            //Student student = _studentRepository.GetById(id);
+            //if (student == null)
+            //  return Error($"No student found for Id {id}");
 
-          _unitOfWork.Commit();
+            //student.Name = dto.Name;
+            //student.Email = dto.Email;
 
-          return Ok();
+            //_unitOfWork.Commit();
+
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
     }
 }
