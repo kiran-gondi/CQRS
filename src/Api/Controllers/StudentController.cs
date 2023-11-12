@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Api.Dtos;
 using CSharpFunctionalExtensions;
 using Logic.Students;
 using Logic.Utils;
@@ -13,39 +12,42 @@ namespace Api.Controllers
     public sealed class StudentController : BaseController
     {
         private readonly UnitOfWork _unitOfWork;
+        private readonly Messages _messages;
         private readonly StudentRepository _studentRepository;
         private readonly CourseRepository _courseRepository;
 
-        public StudentController(UnitOfWork unitOfWork)
+        public StudentController(UnitOfWork unitOfWork, Messages messages)
         {
             _unitOfWork = unitOfWork;
             _studentRepository = new StudentRepository(unitOfWork);
             _courseRepository = new CourseRepository(unitOfWork);
+            _messages = messages;
         }
 
         [HttpGet]
         public IActionResult GetList(string enrolled, int? number) //Query
         {
-            IReadOnlyList<Student> students = _studentRepository.GetList(enrolled, number);
-            List<StudentDto> dtos = students.Select(x => ConvertToDto(x)).ToList();
-            return Ok(dtos);
+          //IReadOnlyList<Student> students = _studentRepository.GetList(enrolled, number);
+          //List<StudentDto> dtos = students.Select(x => ConvertToDto(x)).ToList();
+           List<StudentDto> list = _messages.Dispatch(new EditPersonalInfoCommandHandler.GetListQuery(enrolled, number));
+            return Ok(list);
         }
 
-        private StudentDto ConvertToDto(Student student)
-        {
-            return new StudentDto
-            {
-                Id = student.Id,
-                Name = student.Name,
-                Email = student.Email,
-                Course1 = student.FirstEnrollment?.Course?.Name,
-                Course1Grade = student.FirstEnrollment?.Grade.ToString(),
-                Course1Credits = student.FirstEnrollment?.Course?.Credits,
-                Course2 = student.SecondEnrollment?.Course?.Name,
-                Course2Grade = student.SecondEnrollment?.Grade.ToString(),
-                Course2Credits = student.SecondEnrollment?.Course?.Credits,
-            };
-        }
+        //private StudentDto ConvertToDto(Student student)
+        //{
+        //    return new StudentDto
+        //    {
+        //        Id = student.Id,
+        //        Name = student.Name,
+        //        Email = student.Email,
+        //        Course1 = student.FirstEnrollment?.Course?.Name,
+        //        Course1Grade = student.FirstEnrollment?.Grade.ToString(),
+        //        Course1Credits = student.FirstEnrollment?.Course?.Credits,
+        //        Course2 = student.SecondEnrollment?.Course?.Name,
+        //        Course2Grade = student.SecondEnrollment?.Grade.ToString(),
+        //        Course2Credits = student.SecondEnrollment?.Course?.Credits,
+        //    };
+        //}
 
         [HttpPost]
         public IActionResult Register([FromBody] NewStudentDto dto) //Command
@@ -153,14 +155,10 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public IActionResult EditPersonalInfo(long id, [FromBody] StudentPersonalInfoDto dto) //Command
         {
-            var command = new EditPersonalInfoCommand()
-            {
-              Email = dto.Email,
-              Name = dto.Name,
-              Id = id
-            };
-            var handler = new EditPersonalInfoCommandHandler(_unitOfWork);
-            Result result = handler.Handle(command);
+            var command = new EditPersonalInfoCommand(id, dto.Name, dto.Email);
+            //var handler = new EditPersonalInfoCommandHandler(_unitOfWork);
+            //Result result = handler.Handle(command);
+            Result result = _messages.Dispatch(command);
 
             //Student student = _studentRepository.GetById(id);
             //if (student == null)
