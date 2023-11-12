@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Api.Dtos;
+using CSharpFunctionalExtensions;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace Api.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetList(string enrolled, int? number)
+        public IActionResult GetList(string enrolled, int? number) //Query
         {
             IReadOnlyList<Student> students = _studentRepository.GetList(enrolled, number);
             List<StudentDto> dtos = students.Select(x => ConvertToDto(x)).ToList();
@@ -47,7 +48,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] StudentDto dto)
+        public IActionResult Register([FromBody] NewStudentDto dto) //Command
         {
             var student = new Student(dto.Name, dto.Email);
 
@@ -70,7 +71,7 @@ namespace Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(long id)
+        public IActionResult Unregister(long id) //Command
         {
             Student student = _studentRepository.GetById(id);
             if (student == null)
@@ -82,91 +83,95 @@ namespace Api.Controllers
             return Ok();
         }
 
-        [HttpPut("{id}")]
-        public IActionResult Update(long id, [FromBody] StudentDto dto)
-        {
-            Student student = _studentRepository.GetById(id);
-            if (student == null)
-                return Error($"No student found for Id {id}");
+        [HttpPost("{id}/enrollments")]
+        public IActionResult Enroll(long id, [FromBody] StudentEnrollmentDto dto) //Command
+    {
+          Student student = _studentRepository.GetById(id);
+          if (student == null)
+            return Error($"No student found for Id { id }");
 
-            student.Name = dto.Name;
-            student.Email = dto.Email;
+          Course course = _courseRepository.GetByName(dto.Course);
+          if (course == null)
+            return Error($"Course is incorrect: '{ dto.Course }'");
 
-            Enrollment firstEnrollment = student.FirstEnrollment;
-            Enrollment secondEnrollment = student.SecondEnrollment;
+          bool success = Enum.TryParse(dto.Grade, out Grade grade);
+          if (!success)
+            return Error($"Grade is incorrect: '{ dto.Grade }'");
 
-            if (HasEnrollmentChanged(dto.Course1, dto.Course1Grade, firstEnrollment))
-            {
-                if (string.IsNullOrWhiteSpace(dto.Course1)) // Student disenrolls
-                {
-                    if (string.IsNullOrWhiteSpace(dto.Course1DisenrollmentComment))
-                        return Error("Disenrollment comment is required");
-
-                    Enrollment enrollment = firstEnrollment;
-                    student.RemoveEnrollment(enrollment);
-                    student.AddDisenrollmentComment(enrollment, dto.Course1DisenrollmentComment);
-                }
-
-                if (string.IsNullOrWhiteSpace(dto.Course1Grade))
-                    return Error("Grade is required");
-
-                Course course = _courseRepository.GetByName(dto.Course1);
-
-                if (firstEnrollment == null)
-                {
-                    // Student enrolls
-                    student.Enroll(course, Enum.Parse<Grade>(dto.Course1Grade));
-                }
-                else
-                {
-                    // Student transfers
-                    firstEnrollment.Update(course, Enum.Parse<Grade>(dto.Course1Grade));
-                }
-            }
-
-            if (HasEnrollmentChanged(dto.Course2, dto.Course2Grade, secondEnrollment))
-            {
-                if (string.IsNullOrWhiteSpace(dto.Course2)) // Student disenrolls
-                {
-                    if (string.IsNullOrWhiteSpace(dto.Course2DisenrollmentComment))
-                        return Error("Disenrollment comment is required");
-
-                    Enrollment enrollment = secondEnrollment;
-                    student.RemoveEnrollment(enrollment);
-                    student.AddDisenrollmentComment(enrollment, dto.Course2DisenrollmentComment);
-                }
-
-                if (string.IsNullOrWhiteSpace(dto.Course2Grade))
-                    return Error("Grade is required");
-
-                Course course = _courseRepository.GetByName(dto.Course2);
-
-                if (secondEnrollment == null)
-                {
-                    // Student enrolls
-                    student.Enroll(course, Enum.Parse<Grade>(dto.Course2Grade));
-                }
-                else
-                {
-                    // Student transfers
-                    secondEnrollment.Update(course, Enum.Parse<Grade>(dto.Course2Grade));
-                }
-            }
-
-            _unitOfWork.Commit();
-
-            return Ok();
+          student.Enroll(course, grade);
+          _unitOfWork.Commit();
+          return Ok();
         }
 
-        private bool HasEnrollmentChanged(string newCourseName, string newGrade, Enrollment enrollment)
+
+        [HttpPut("{id}/enrollments/{enrollmentNumber}")]    
+        public IActionResult Transfer(long id, int enrollmentNumber, [FromBody] StudentTransferDto dto) //Command
+    {
+          Student student = _studentRepository.GetById(id);
+          if (student == null)
+            return Error($"No student found for Id { id }");
+
+          Course course = _courseRepository.GetByName(dto.Course);
+          if (course == null)
+            return Error($"Course is incorrect: '{ dto.Course }'");
+
+          bool success = Enum.TryParse(dto.Grade, out Grade grade);
+          if (!success)
+            return Error($"Grade is incorrect: '{ dto.Grade }'");
+
+          Enrollment enrollment = student.GetEnrollment(enrollmentNumber);
+          if (enrollment == null)
+            return Error($"No enrollment found with number ' { enrollmentNumber } '");
+
+          enrollment.Update(course, enrollment.Grade);
+          _unitOfWork.Commit();
+
+          return Ok();
+        }
+
+        [HttpPost("{id}/enrollments/{enrollmentNumber}/deletion")]    
+        public IActionResult Disenroll(long id, int enrollmentNumber, [FromBody] StudentDisenrollmentDto dto) //Command
+    {
+          Student student = _studentRepository.GetById(id);
+          if (student == null)
+            return Error($"No student found for Id {id}");
+
+          if (string.IsNullOrWhiteSpace(dto.Comment))
+            return Error("Disenrollment comment is required");
+
+          Enrollment enrollment = student.GetEnrollment(enrollmentNumber);
+          if (enrollment == null)
+            return Error($"No enrollment found with number ' { enrollmentNumber } '");
+
+          student.RemoveEnrollment(enrollment, dto.Comment); 
+
+          _unitOfWork.Commit();
+
+          return Ok();
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult EditPersonalInfo(long id, [FromBody] StudentPersonalInfoDto dto) //Command
         {
-            if (string.IsNullOrWhiteSpace(newCourseName) && enrollment == null)
-                return false;
+            var command = new EditPersonalInfoCommand()
+            {
+              Email = dto.Email,
+              Name = dto.Name,
+              Id = id
+            };
+            var handler = new EditPersonalInfoCommandHandler(_unitOfWork);
+            Result result = handler.Handle(command);
 
-            if (string.IsNullOrWhiteSpace(newCourseName) || enrollment == null)
-                return true;
+            //Student student = _studentRepository.GetById(id);
+            //if (student == null)
+            //  return Error($"No student found for Id {id}");
 
-            return newCourseName != enrollment.Course.Name || newGrade != enrollment.Grade.ToString();
+            //student.Name = dto.Name;
+            //student.Email = dto.Email;
+
+            //_unitOfWork.Commit();
+
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
     }
 }
