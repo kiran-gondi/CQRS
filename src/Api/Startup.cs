@@ -26,6 +26,13 @@ namespace Api
             services.AddTransient<UnitOfWork>();
             services.AddTransient<ICommandHandler<EditPersonalInfoCommand>, EditPersonalInfoCommandHandler>();
             services.AddTransient<IQueryHandler<GetListQuery, List<StudentDto>>, GetListQueryHandler>();
+      
+            services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
+            services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
+            services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
+            services.AddTransient<ICommandHandler<TransferCommand>, TransferCommandHandler>();
+            services.AddTransient<ICommandHandler<DisenrollCommand>, DisenrollCommandHandler>();
+
             services.AddSingleton<Messages>();
         }
 
