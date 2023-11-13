@@ -22,7 +22,10 @@ namespace Api
             var config = new Config(3); //Deserialize from appsettings.json
             services.AddSingleton(config);
 
-            services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
+            var connectionString = new ConnectionString(Configuration["ConnectionString"]);
+            services.AddSingleton(connectionString);
+
+            services.AddSingleton<SessionFactory>();
             services.AddTransient<UnitOfWork>();
 
             /*services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider => 

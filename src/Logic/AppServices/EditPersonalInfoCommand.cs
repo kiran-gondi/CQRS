@@ -8,17 +8,6 @@ using System.Linq;
 namespace Logic.AppServices
 {
   #region EditPersonalInfoCommand
-  public interface ICommand
-  {
-
-  }
-
-  public interface ICommandHandler<TCommand>
-    where TCommand : ICommand
-  {
-    Result Handle(TCommand command);
-  }
-
   public sealed class EditPersonalInfoCommand : ICommand
   {
     public long Id { get; }
