@@ -7,6 +7,7 @@ using System.Text;
 
 namespace Logic.Students
 {
+  #region EditPersonalInfoCommand
   public interface ICommand
   {
 
@@ -34,16 +35,17 @@ namespace Logic.Students
 
   public sealed class EditPersonalInfoCommandHandler : ICommandHandler<EditPersonalInfoCommand>
   {
-    private readonly UnitOfWork _unitOfWork;
+    private readonly SessionFactory _sessionFactory;
 
-    public EditPersonalInfoCommandHandler(UnitOfWork unitOfWork)
+    public EditPersonalInfoCommandHandler(SessionFactory sessionFactory)
     {
-      _unitOfWork = unitOfWork;
+      _sessionFactory = sessionFactory;
     }
 
     public Result Handle(EditPersonalInfoCommand command)
     {
-      var repository = new StudentRepository(_unitOfWork);
+      var unitOfWork = new UnitOfWork(_sessionFactory);
+      var repository = new StudentRepository(unitOfWork);
       Student student = repository.GetById(command.Id);
 
       if (student == null)
@@ -52,13 +54,15 @@ namespace Logic.Students
       student.Name = command.Name;
       student.Email = command.Email;
 
-      _unitOfWork.Commit();
+      unitOfWork.Commit();
 
       return Result.Ok();
     }
   }
+  #endregion
 
   //##################################################################### QUERY-BELOW #########################################
+  #region GetListQuery
   public interface IQuery<TResult>
   {
 
@@ -112,7 +116,8 @@ namespace Logic.Students
         Course2Credits = student.SecondEnrollment?.Course?.Credits,
       };
     }
-  }
+  } 
+  #endregion
 
   //##################################################################### REMAINING-BELOW #########################################
 

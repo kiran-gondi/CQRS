@@ -1,4 +1,5 @@
 ﻿using Api.Utils;
+using Logic.Decorators;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
@@ -21,10 +22,17 @@ namespace Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            
+            var config = new Config(3); //Deserialize from appsettings.json
+            services.AddSingleton(config);
 
             services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
             services.AddTransient<UnitOfWork>();
-            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>, EditPersonalInfoCommandHandler>();
+
+            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider => 
+                      new DatabaseRetryDecorator<EditPersonalInfoCommand>(
+                          new EditPersonalInfoCommandHandler(provider.GetService<SessionFactory>()), provider.GetService<Config>()));
+
             services.AddTransient<IQueryHandler<GetListQuery, List<StudentDto>>, GetListQueryHandler>();
       
             services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
