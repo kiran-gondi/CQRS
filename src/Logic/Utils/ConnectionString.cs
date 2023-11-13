@@ -4,13 +4,25 @@ using System.Text;
 
 namespace Logic.Utils
 {
-  public sealed class ConnectionString
+  public sealed class CommandsConnectionString
   {
     public string Value { get; }
 
-    public ConnectionString(string value)
+    public CommandsConnectionString(string value)
     {
       Value = value;
     }
   }
+
+  public sealed class QueriesConnectionString
+  {
+    public string Value { get; }
+
+    public QueriesConnectionString(string value)
+    {
+      Value = value;
+    }
+  }
+
+
 }
