@@ -1,16 +1,12 @@
 ﻿using Api.Utils;
-using Logic.Decorators;
-using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
-using static Logic.Students.EditPersonalInfoCommandHandler;
 
 namespace Api
 {
-    public class Startup
+  public class Startup
     {
         public IConfiguration Configuration { get; }
 
@@ -29,9 +25,10 @@ namespace Api
             services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
             services.AddTransient<UnitOfWork>();
 
-            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider => 
+            /*services.AddTransient<ICommandHandler<EditPersonalInfoCommand>>(provider => 
+                  new AuditLoggingDecorator<EditPersonalInfoCommand>(
                       new DatabaseRetryDecorator<EditPersonalInfoCommand>(
-                          new EditPersonalInfoCommandHandler(provider.GetService<SessionFactory>()), provider.GetService<Config>()));
+                          new EditPersonalInfoCommandHandler(provider.GetService<SessionFactory>()), provider.GetService<Config>())));
 
             services.AddTransient<IQueryHandler<GetListQuery, List<StudentDto>>, GetListQueryHandler>();
       
@@ -39,9 +36,10 @@ namespace Api
             services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
             services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
             services.AddTransient<ICommandHandler<TransferCommand>, TransferCommandHandler>();
-            services.AddTransient<ICommandHandler<DisenrollCommand>, DisenrollCommandHandler>();
+            services.AddTransient<ICommandHandler<DisenrollCommand>, DisenrollCommandHandler>();*/
 
             services.AddSingleton<Messages>();
+            services.AddHandlers();
         }
 
         public void Configure(IApplicationBuilder app)

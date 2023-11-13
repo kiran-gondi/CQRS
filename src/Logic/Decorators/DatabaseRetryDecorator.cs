@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using Logic.AppServices;
 using Logic.Students;
 using Logic.Utils;
 using System;
@@ -7,6 +8,8 @@ using System.Text;
 
 namespace Logic.Decorators
 {
+  //Decorator Definition
+  //Decorator is a class or a method that modifies the behavior of an exisiting class or method without changing its public interface.
   public sealed class DatabaseRetryDecorator<TCommand> : ICommandHandler<TCommand>
     where TCommand : ICommand
   {
